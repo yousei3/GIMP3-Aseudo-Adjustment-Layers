@@ -54,8 +54,9 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
             ("gegl:video-degradation", "Video Degradation"), ("gegl:waves", "Waves"), ("gegl:whirl-pinch", "Whirl and Pinch"), ("gegl:wind", "Wind")
         ]),
         ("Light and Shadow", [
-            ("gegl:bloom", "Bloom"), ("gegl:supernova", "Supernova"), ("gegl:lens-flare", "Lens Flare"),
-            ("gegl:drop-shadow", "Drop Shadow"), ("gegl:long-shadow", "Long Shadow"), ("gegl:vignette", "Vignette")
+            ("gegl:bevel", "Bevel"), ("gegl:bloom", "Bloom"), ("gegl:drop-shadow", "Drop Shadow"), 
+            ("gegl:inner-glow", "Inner Glow"), ("gegl:lens-flare", "Lens Flare"), 
+            ("gegl:long-shadow", "Long Shadow"), ("gegl:supernova", "Supernova"), ("gegl:vignette", "Vignette")
         ]),
         ("Noise", [
             ("gegl:noise-cie-lch", "CIE lch Noise"), ("gegl:noise-hsv", "HSV Noise"), ("gegl:noise-hurl", "Hurl"),
@@ -67,7 +68,8 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         ]),
         ("Generic", [
             ("gegl:convolution-matrix", "Convolution Matrix"), ("gegl:distance-transform", "Distance Map"),
-            ("gegl:normal-map", "Normal Map"), ("gegl:dilate", "Dilate"), ("gegl:erode", "Erode")
+            ("gegl:layer-style", "Layer Style"), ("gegl:layer-styles", "Layer Styles"), ("gegl:normal-map", "Normal Map"), 
+            ("gegl:dilate", "Dilate"), ("gegl:erode", "Erode")
         ]),
         ("Combine", [("gegl:depth-merge", "Depth Merge")]),
         ("Artistic", [
@@ -89,7 +91,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
     ]
 
     def do_query_procedures(self):
-        return ["python-pseudo-adjustment-layer-v70"]
+        return ["python-pseudo-adjustment-layer-v71"]
 
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name, Gimp.PDBProcType.PLUGIN, self.run, None)
@@ -414,12 +416,21 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
 
     def get_op_name_for_dialog(self, op):
         tr = self.config["translate_active"]
-        if op in self.current_translation["filters"]: return self.current_translation["filters"][op]["local" if tr else "en"]
-        return op.split(':')[-1].replace('-', ' ').title()
+        if op in self.current_translation["filters"]: 
+            return self.current_translation["filters"][op]["local" if tr else "en"]
+            
+        # Othersフォルダなどの未知のフィルタにNamespaceを表示させる処理
+        if ":" in op:
+            namespace, name = op.split(':', 1)
+            formatted_name = name.replace('-', ' ').title()
+            if namespace not in ["gimp", "gegl"]:
+                return f"{namespace}: {formatted_name}"
+            return formatted_name
+            
+        return op.replace('-', ' ').title()
         
     def on_translate_toggled(self, sw, ps): self.config["translate_active"] = sw.get_active(); self.save_json(self.config_file, self.config); self.refresh_tree()
     def on_autoclose_toggled(self, sw, ps): self.config["auto_close"] = sw.get_active(); self.save_json(self.config_file, self.config)
-    
     def on_search_changed(self, se): 
         self.filter_model.refilter()
         if se.get_text(): self.treeview.expand_all() 
@@ -428,24 +439,23 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
     def filter_tree_visible(self, m, i, d):
         q = self.search_entry.get_text().lower()
         if not q: return True
-        txt, op = m.get_value(i, 0).lower(), m.get_value(i, 1).lower()
         
-        # 特殊なフォルダ（お気に入り、履歴など）は検索時に親ごと隠す
-        is_special_folder = any(x in txt for x in ["⭐", "📝", "🌚", "🧩"])
-        if is_special_folder:
-            return False
-            
-        # 自身がマッチするか
-        match_self = (q in txt) or (q in op)
+        txt = m.get_value(i, 0).lower()
+        op = (m.get_value(i, 1) or "").lower()
         
-        # 自身がマッチしなくても、子要素がマッチしていれば表示を維持
+        # 子要素がマッチするか再帰的にチェック
         ci = m.iter_children(i)
         while ci:
-            if q in m.get_value(ci, 0).lower() or q in m.get_value(ci, 1).lower(): 
+            if self.filter_tree_visible(m, ci, d):
                 return True
             ci = m.iter_next(ci)
             
-        return match_self
+        # 自身がマッチするか（フォルダそのものは検索対象から外す）
+        is_folder = not op
+        if not is_folder and (q in txt or q in op):
+            return True
+            
+        return False
 
     def on_tree_button_press(self, tv, ev):
         if ev.button == 3:
