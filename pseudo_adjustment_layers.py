@@ -3,7 +3,7 @@
 
 # ==============================================================================
 # Pseudo Adjustment Layer
-# Internal Version: v87
+# Internal Version: v99 (Public v1.9)
 # ==============================================================================
 
 import gi
@@ -20,85 +20,124 @@ from gi.repository import Gimp, GimpUi, Gegl, Gtk, Gdk, GObject, GLib
 import sys
 
 DEBUG_MODE = False
+PUBLIC_VERSION = "Ver1.9"
 
 class PseudoAdjustmentLayer(Gimp.PlugIn):
     
     GIMP_OFFICIAL_MENU = [
         ("Colors", [
-            ("gimp:color-balance", "Color Balance"), ("gegl:color-temperature", "Color Temperature"),
-            ("gegl:hue-chroma", "Hue-Chroma"), ("gimp:hue-saturation", "Hue-Saturation"),
-            ("gegl:saturation", "Saturation"), ("gegl:exposure", "Exposure"),
-            ("gegl:shadows-highlights", "Shadows-Highlights"), ("gimp:brightness-contrast", "Brightness-Contrast"),
-            ("gimp:levels", "Levels"), ("gimp:curves", "Curves"),
+            ("gimp:color-balance", "Color Balance..."), ("gegl:color-temperature", "Color Temperature..."),
+            ("gegl:hue-chroma", "Hue-Chroma..."), ("gimp:hue-saturation", "Hue-Saturation..."),
+            ("gegl:saturation", "Saturation..."), ("gegl:exposure", "Exposure..."),
+            ("gegl:shadows-highlights", "Shadows-Highlights..."), ("gimp:brightness-contrast", "Brightness-Contrast..."),
+            ("gimp:levels", "Levels..."), ("gimp:curves", "Curves..."),
             ("gegl:invert-linear", "Linear Invert"), ("gegl:value-invert", "Value Invert"),
-            ("gimp:threshold", "Threshold"), ("gimp:colorize", "Colorize"), ("gimp:posterize", "Posterize"),
-            ("gegl:color-to-alpha", "Color to Alpha"), ("gegl:color-overlay", "Color Overlay"),
-            ("gegl:color-warp", "Color Warp"), ("gegl:dither", "Dither"),
-            ("gegl:rgb-clip", "RGB Clip"), ("gegl:local-threshold", "Local Threshold"),
-            ("Components", [("gegl:channel-mixer", "Channel Mixer"), ("gegl:component-extract", "Extract Component"), ("gegl:mono-mixer", "Mono Mixer")]),
-            ("Desaturate", [("gimp:desaturate", "Desaturate"), ("gegl:mono-mixer", "Mono Mixer"), ("gegl:sepia", "Sepia")]),
-            ("Map", [("gegl:alien-map", "Alien Map"), ("gegl:color-exchange", "Color Exchange"), ("gegl:rotate-colors", "Rotate Colors")]),
-            ("Tone mapping", [("gegl:fattal02", "Fattal et al. 2002"), ("gegl:mantiuk06", "Mantiuk 2006")])
+            ("gimp:threshold", "Threshold..."), ("gimp:colorize", "Colorize..."), ("gimp:posterize", "Posterize..."),
+            ("gegl:color-to-alpha", "Color to Alpha..."), ("gegl:color-overlay", "Color Overlay..."),
+            ("gegl:color-warp", "Color Warp..."), ("gegl:dither", "Dither..."),
+            ("gegl:rgb-clip", "RGB Clip..."), ("gegl:local-threshold", "Local Threshold..."),
+            ("Components", [("gegl:channel-mixer", "Channel Mixer..."), ("gegl:component-extract", "Extract Component..."), ("gegl:mono-mixer", "Mono Mixer...")]),
+            ("Desaturate", [("gimp:desaturate", "Desaturate..."), ("gegl:sepia", "Sepia...")]),
+            ("Map", [("gegl:alien-map", "Alien Map..."), ("gegl:color-exchange", "Color Exchange..."), ("gegl:rotate-colors", "Rotate Colors...")]),
+            ("Tone mapping", [("gegl:fattal02", "Fattal et al. 2002..."), ("gegl:mantiuk06", "Mantiuk 2006...")])
         ]),
         ("Blur", [
-            ("gegl:focus-blur", "Focus Blur"), ("gegl:gaussian-blur", "Gaussian Blur"), ("gegl:lens-blur", "Lens Blur"),
-            ("gegl:mean-curvature-blur", "Mean Curvature Blur"), ("gegl:median-blur", "Median Blur"), ("gegl:pixelize", "Pixelize"),
-            ("gegl:selective-gaussian-blur", "Selective Gaussian Blur"), ("gegl:variable-blur", "Variable Blur"),
-            ("gegl:motion-blur-circular", "Circular Motion Blur"), ("gegl:motion-blur-linear", "Linear Motion Blur"),
-            ("gegl:motion-blur-zoom", "Zoom Motion Blur"), ("gegl:tileable-blur", "Tileable Blur")
+            ("gegl:focus-blur", "Focus Blur..."), ("gegl:gaussian-blur", "Gaussian Blur..."), ("gegl:lens-blur", "Lens Blur..."),
+            ("gegl:mean-curvature-blur", "Mean Curvature Blur..."), ("gegl:median-blur", "Median Blur..."), ("gegl:pixelize", "Pixelize..."),
+            ("gegl:selective-gaussian-blur", "Selective Gaussian Blur..."), ("gegl:variable-blur", "Variable Blur..."),
+            ("gegl:motion-blur-circular", "Circular Motion Blur..."), ("gegl:motion-blur-linear", "Linear Motion Blur..."),
+            ("gegl:motion-blur-zoom", "Zoom Motion Blur..."), ("gegl:tileable-blur", "Tileable Blur...")
         ]),
         ("Enhance", [
-            ("gegl:antialias", "Antialias"), ("gegl:deinterlace", "Deinterlace"), ("gegl:high-pass", "High Pass"),
-            ("gegl:noise-reduction", "Noise Reduction"), ("gegl:red-eye-removal", "Red Eye Removal"),
-            ("gegl:snn-mean", "Symmetric Nearest Neighbor"), ("gegl:unsharp-mask", "Sharpen (Unsharp Mask)"),
-            ("gegl:despeckle", "Despeckle"), ("gegl:nl-filter", "NL Filter")
+            ("gegl:antialias", "Antialias"), ("gegl:deinterlace", "Deinterlace..."), ("gegl:high-pass", "High Pass..."),
+            ("gegl:noise-reduction", "Noise Reduction..."), ("gegl:red-eye-removal", "Red Eye Removal..."),
+            ("gegl:snn-mean", "Symmetric Nearest Neighbor..."), ("gegl:unsharp-mask", "Sharpen (Unsharp Mask)..."),
+            ("gegl:despeckle", "Despeckle..."), ("gegl:nl-filter", "NL Filter..."),
+            ("gegl:wavelet-decompose", "Wavelet Decompose..."), ("gimp:wavelet-decompose", "Wavelet Decompose...")
         ]),
         ("Distorts", [
-            ("gegl:apply-lens", "Apply Lens"), ("gegl:emboss", "Emboss"), ("gegl:engrave", "Engrave"),
-            ("gegl:lens-distortion", "Lens Distortion"), ("gegl:kaleidoscope", "Kaleidoscope"), ("gegl:mosaic", "Mosaic"),
-            ("gegl:newsprint", "Newsprint"), ("gegl:polar-coordinates", "Polar Coordinates"), ("gegl:ripple", "Ripple"),
-            ("gegl:shift", "Shift"), ("gegl:spherize", "Spherize"), ("gegl:value-propagate", "Value Propagate"),
-            ("gegl:video-degradation", "Video Degradation"), ("gegl:waves", "Waves"), ("gegl:whirl-pinch", "Whirl and Pinch"), ("gegl:wind", "Wind")
+            ("gegl:apply-lens", "Apply Lens..."), ("gegl:emboss", "Emboss..."), ("gegl:engrave", "Engrave..."),
+            ("gegl:lens-distortion", "Lens Distortion..."), ("gegl:kaleidoscope", "Kaleidoscope..."), ("gegl:mosaic", "Mosaic..."),
+            ("gegl:newsprint", "Newsprint..."), ("gegl:polar-coordinates", "Polar Coordinates..."), ("gegl:ripple", "Ripple..."),
+            ("gegl:shift", "Shift..."), ("gegl:spherize", "Spherize..."), ("gegl:value-propagate", "Value Propagate..."),
+            ("gegl:video-degradation", "Video Degradation..."), ("gegl:waves", "Waves..."), ("gegl:whirl-pinch", "Whirl and Pinch..."), ("gegl:wind", "Wind..."),
+            ("gimp:blinds", "Blinds..."), ("gimp:curve-bend", "Curve Bend..."), ("gimp:pagecurl", "Pagecurl...")
         ]),
         ("Light and Shadow", [
-            ("gegl:bevel", "Bevel"), ("gegl:bloom", "Bloom"), ("gegl:drop-shadow", "Drop Shadow"), 
-            ("gegl:inner-glow", "Inner Glow"), ("gegl:lens-flare", "Lens Flare"), 
-            ("gegl:long-shadow", "Long Shadow"), ("gegl:supernova", "Supernova"), ("gegl:vignette", "Vignette")
+            ("gegl:bloom", "Bloom..."), ("gegl:supernova", "Supernova..."), ("gegl:lens-flare", "Lens Flare..."), 
+            ("gimp:gradient-flare", "Gradient Flare..."), ("gimp:lighting-effects", "Lighting Effects..."),
+            ("gegl:dropshadow", "Drop Shadow..."), ("gegl:long-shadow", "Long Shadow..."), ("gegl:vignette", "Vignette..."),
+            ("gimp:drop-shadow-legacy", "Drop Shadow (legacy)..."), ("gimp:perspective-shadow", "Perspective..."),
+            ("gimp:xach-effect", "Xach-Effect..."),
+            ("gegl:bevel", "Bevel..."), ("gegl:inner-glow", "Inner Glow..."), ("gimp:glass-tiled-window", "Glass Tiled Window...")
         ]),
         ("Noise", [
-            ("gegl:noise-cie-lch", "CIE lch Noise"), ("gegl:noise-hsv", "HSV Noise"), ("gegl:noise-hurl", "Hurl"),
-            ("gegl:noise-pick", "Pick"), ("gegl:noise-rgb", "RGB Noise"), ("gegl:noise-slur", "Slur"), ("gegl:noise-spread", "Spread")
+            ("gegl:noise-cie-lch", "CIE lch Noise..."), ("gegl:noise-hsv", "HSV Noise..."), ("gegl:noise-hurl", "Hurl..."),
+            ("gegl:noise-pick", "Pick..."), ("gegl:noise-rgb", "RGB Noise..."), ("gegl:noise-slur", "Slur..."), ("gegl:noise-spread", "Spread...")
         ]),
         ("Edge-Detect", [
-            ("gegl:difference-of-gaussians", "Difference of Gaussians"), ("gegl:edge", "Edge"), ("gegl:edge-laplace", "Laplace"),
-            ("gegl:edge-neon", "Neon"), ("gegl:edge-sobel", "Sobel"), ("gegl:image-gradient", "Image Gradient")
+            ("gegl:difference-of-gaussians", "Difference of Gaussians..."), ("gegl:edge", "Edge..."), ("gegl:edge-laplace", "Laplace..."),
+            ("gegl:edge-neon", "Neon..."), ("gegl:edge-sobel", "Sobel..."), ("gegl:image-gradient", "Image Gradient...")
         ]),
         ("Generic", [
-            ("gegl:convolution-matrix", "Convolution Matrix"), ("gegl:distance-transform", "Distance Map"),
-            ("gegl:layer-style", "Layer Style"), ("gegl:layer-styles", "Layer Styles"), ("gegl:normal-map", "Normal Map"), 
-            ("gegl:dilate", "Dilate"), ("gegl:erode", "Erode")
+            ("gegl:convolution-matrix", "Convolution Matrix..."), ("gegl:distance-transform", "Distance Map..."),
+            ("gegl:normal-map", "Normal Map..."), ("gegl:dilate", "Dilate"), ("gegl:erode", "Erode"),
+            ("gegl:gegl-graph", "GEGL Graph..."), ("gimp:gegl-graph", "GEGL Graph..."), ("gegl:styles", "Text Styling...")
         ]),
-        ("Combine", [("gegl:depth-merge", "Depth Merge")]),
+        ("Combine", [
+            ("gegl:depth-merge", "Depth Merge..."), ("gimp:filmstrip", "Filmstrip...")
+        ]),
         ("Artistic", [
-            ("gegl:apply-canvas", "Apply Canvas"), ("gegl:cartoon", "Cartoon"), ("gegl:cubism", "Cubism"),
-            ("gegl:glass-tile", "Glass Tile"), ("gegl:oilify", "Oilify"), ("gegl:photocopy", "Photocopy"),
-            ("gegl:slic", "Simple Linear Iterative Clustering"), ("gegl:softglow", "Softglow"),
-            ("gegl:waterpixels", "Waterpixels"), ("gegl:clothify", "Clothify"), ("gegl:weave", "Weave")
+            ("gegl:apply-canvas", "Apply Canvas..."), ("gegl:cartoon", "Cartoon..."), ("gegl:cubism", "Cubism..."),
+            ("gegl:glass-tile", "Glass Tile..."), ("gegl:oilify", "Oilify..."), ("gegl:photocopy", "Photocopy..."),
+            ("gegl:slic", "Simple Linear Iterative Clustering..."), ("gegl:softglow", "Softglow..."),
+            ("gegl:waterpixels", "Waterpixels..."), ("gegl:clothify", "Clothify..."),
+            ("gimp:gimpressionist", "GIMPressionist..."), ("gimp:van-gogh-lic", "Van Gogh (LIC)..."), ("gegl:weave", "Weave...")
+        ]),
+        ("Decor", [
+            ("gimp:add-bevel", "Add Bevel..."), ("gimp:add-border", "Add Border..."), ("gimp:fog", "Fog..."), 
+            ("gimp:fuzzy-border", "Fuzzy Border..."), ("gimp:old-photo", "Old Photo..."), ("gimp:round-corners", "Round Corners..."), 
+            ("gimp:slide", "Slide..."), ("gimp:stain", "Stain..."), ("gimp:stencil-carve", "Stencil Carve..."), ("gimp:stencil-chrome", "Stencil Chrome...")
         ]),
         ("Map", [
-            ("gegl:bump-map", "Bump Map"), ("gegl:displace", "Displace"), ("gegl:fractal-trace", "Fractal Trace"),
-            ("gegl:illusion", "Illusion"), ("gegl:little-planet", "Little Planet"), ("gegl:panorama-projection", "Panorama Projection"),
-            ("gegl:recursive-transform", "Recursive Transform"), ("gegl:paper-tile", "Paper Tile"), ("gegl:tile-seamless", "Tile Seamless")
+            ("gegl:bump-map", "Bump Map..."), ("gegl:displace", "Displace..."), ("gegl:fractal-trace", "Fractal Trace..."),
+            ("gegl:illusion", "Illusion..."), ("gegl:little-planet", "Little Planet..."), ("gegl:panorama-projection", "Panorama Projection..."),
+            ("gegl:recursive-transform", "Recursive Transform..."), ("gegl:paper-tile", "Paper Tile..."), ("gegl:tile-seamless", "Tile Seamless..."),
+            ("gimp:map-object", "Map Object..."), ("gimp:small-tiles", "Small Tiles..."), ("gegl:tile", "Tile..."), ("gimp:tile", "Tile..."), ("gimp:warp", "Warp...")
         ]),
         ("Render", [
-            ("gegl:checkerboard", "Checkerboard"), ("gegl:grid", "Grid"), ("gegl:maze", "Maze"), ("gegl:plasma", "Plasma"),
-            ("gegl:noise-solid", "Solid Noise"), ("gegl:sinus", "Sinus"), ("gegl:noise-cell", "Cell Noise"),
-            ("gegl:noise-perlin", "Perlin Noise"), ("gegl:noise-simplex", "Simplex Noise")
+            ("Fractals", [
+                ("gimp:fractal-explorer", "Fractal Explorer..."), ("gimp:flame", "Flame..."), ("gimp:ifs-fractal", "IFS Fractal...")
+            ]),
+            ("Noise", [
+                ("gegl:cell-noise", "Cell Noise..."), ("gegl:perlin-noise", "Perlin Noise..."),
+                ("gegl:plasma", "Plasma..."), ("gegl:simplex-noise", "Simplex Noise..."),
+                ("gegl:noise-solid", "Solid Noise..."), ("gegl:difference-clouds", "Difference Clouds"), ("gimp:difference-clouds", "Difference Clouds")
+            ]),
+            ("Pattern", [
+                ("gegl:bayer-matrix", "Bayer Matrix..."), ("gegl:checkerboard", "Checkerboard..."), 
+                ("gegl:diffraction-patterns", "Diffraction Patterns..."), ("gegl:grid", "Grid..."),
+                ("gegl:linear-sinusoid", "Linear Sinusoid..."), ("gegl:maze", "Maze..."), 
+                ("gegl:sinus", "Sinus..."), ("gegl:spiral", "Spiral..."), ("gimp:spiral", "Spiral..."),
+                ("gimp:checkerboard", "Checkerboard (legacy)..."), ("gimp:cml-explorer", "CML Explorer..."),
+                ("gimp:grid", "Grid (legacy)..."), ("gegl:jigsaw", "Jigsaw..."), ("gimp:jigsaw", "Jigsaw..."),
+                ("gegl:qbist", "Qbist..."), ("gimp:qbist", "Qbist...")
+            ]),
+            ("gimp:spyrogimp", "Spyrogimp..."), ("gimp:circuit", "Circuit..."), ("gimp:gfig", "Gfig..."), 
+            ("gimp:lava", "Lava..."), ("gimp:line-nova", "Line Nova..."), ("gimp:sphere-designer", "Sphere Designer...")
+        ]),
+        ("Web", [
+            ("gimp:semi-flatten", "Semi-Flatten..."), ("gimp:image-map", "Image Map...")
+        ]),
+        ("Animation", [
+            ("gimp:animation-blend", "Blend..."), ("gimp:animation-burn-in", "Burn-In..."), ("gimp:animation-playback", "Playback..."),
+            ("gimp:animation-rippling", "Rippling..."), ("gimp:animation-spinning-globe", "Spinning Globe..."), ("gimp:animation-waves", "Waves..."),
+            ("gimp:animation-optimize-difference", "Optimize (Difference)"), ("gimp:animation-optimize-gif", "Optimize (for GIF)"), ("gimp:animation-unoptimize", "Unoptimize")
         ])
     ]
 
     def do_query_procedures(self):
-        return ["python-pseudo-adjustment-layer-v87"]
+        return ["python-pseudo-adjustment-layer-v99"]
 
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name, Gimp.PDBProcType.PLUGIN, self.run, None)
@@ -111,12 +150,20 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
     def _gettext_translate(self, text, target_lang):
         domains = ["gimp30", "gegl-0.4", "gimp30-std-plug-ins"]
         locale_dirs = [None, "/app/share/locale", "/usr/share/locale", "/usr/local/share/locale"]
+        
+        clean_text = text.replace("...", "")
+        variations = [text, clean_text]
+        
         for d in domains:
             for ld in locale_dirs:
                 try:
                     t = gettext.translation(d, localedir=ld, languages=[target_lang])
-                    res = t.gettext(text)
-                    if res and res != text: return res.replace("...", "")
+                    for v in variations:
+                        res = t.gettext(v)
+                        if res and res != v:
+                            if text.endswith("...") and not res.endswith("..."):
+                                return res + "..."
+                            return res
                 except Exception: continue
         return text
 
@@ -126,10 +173,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
             if not os.path.exists(lang_dir): os.makedirs(lang_dir)
         except Exception: pass
         lang_file = os.path.join(lang_dir, f"{lang_code}.json")
-        if os.path.exists(lang_file):
-            try:
-                with open(lang_file, 'r', encoding='utf-8') as f: return json.load(f)
-            except Exception: pass
+        
         trans_data = {"categories": {}, "filters": {}}
         def _collect(menu):
             for name, items in menu:
@@ -145,6 +189,26 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         trans_data["categories"]["Hidden"] = {"en": "Hidden", "local": self._gettext_translate("Hidden", lang_code)}
         trans_data["categories"]["Third-Party Filters"] = {"en": "Third-Party Filters", "local": self._gettext_translate("Third-Party Filters", lang_code)}
         trans_data["categories"]["History"] = {"en": "History", "local": self._gettext_translate("History", lang_code)}
+        
+        if os.path.exists(lang_file):
+            try:
+                with open(lang_file, 'r', encoding='utf-8') as f:
+                    saved_data = json.load(f)
+                    for cat, data in saved_data.get("categories", {}).items():
+                        if cat in trans_data["categories"]:
+                            if data.get("local") and data.get("local") != data.get("en"):
+                                trans_data["categories"][cat]["local"] = data["local"]
+                        else:
+                            trans_data["categories"][cat] = data
+                            
+                    for op, data in saved_data.get("filters", {}).items():
+                        if op in trans_data["filters"]:
+                            if data.get("local") and data.get("local") != data.get("en"):
+                                trans_data["filters"][op]["local"] = data["local"]
+                        else:
+                            trans_data["filters"][op] = data
+            except Exception: pass
+            
         try:
             with open(lang_file, 'w', encoding='utf-8') as f: json.dump(trans_data, f, indent=4, ensure_ascii=False)
         except Exception: pass
@@ -174,7 +238,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         gegl_ops = set(Gegl.list_operations())
         filters = []
         all_planned = self._flatten_menu_ops(self.GIMP_OFFICIAL_MENU)
-        safe_list = ["gegl:drop-shadow", "gegl:layer-style", "gegl:layer-styles"]
+        safe_list = ["gegl:dropshadow", "gegl:styles"]
         
         for op in all_planned:
             if op.startswith("gimp:") or op in gegl_ops or op in safe_list: 
@@ -193,7 +257,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
                 with open(self.filters_file, 'r') as f:
                     saved_list = json.load(f)
                     valid_ops = self._flatten_menu_ops(self.GIMP_OFFICIAL_MENU)
-                    safe_list = ["gegl:drop-shadow", "gegl:layer-style", "gegl:layer-styles"]
+                    safe_list = ["gegl:dropshadow", "gegl:styles"]
                     return [f for f in saved_list if (f in valid_ops or not f.startswith("gimp:") and not f.startswith("gegl:") or f in safe_list)]
             except Exception: pass
         return self.fetch_and_save_filters()
@@ -207,6 +271,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         GimpUi.init("python-pseudo-adjustment-layer")
         Gegl.init(None)
 
+        self._is_refreshing = False
         self.image, self.drawable = image, drawables[0]
         base = os.path.dirname(os.path.abspath(__file__))
         self.fav_file = os.path.join(base, "pal_favorites.json")
@@ -266,15 +331,23 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         self.treeview.append_column(Gtk.TreeViewColumn("Filter", Gtk.CellRendererText(), markup=0))
 
         scroll = Gtk.ScrolledWindow(); scroll.add(self.treeview); main_vbox.pack_start(scroll, True, True, 0)
-        self.btn_reset = Gtk.Button(label="🔄 Reset List"); self.btn_reset.connect("clicked", self.on_reset_filters_clicked)
-        main_vbox.pack_start(self.btn_reset, False, False, 0)
+        
+        bottom_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        self.btn_reset = Gtk.Button(label="🔄 Reset List")
+        self.btn_reset.connect("clicked", self.on_reset_filters_clicked)
+        bottom_hbox.pack_start(self.btn_reset, True, True, 0)
+        
+        lbl_version = Gtk.Label(label=PUBLIC_VERSION)
+        bottom_hbox.pack_start(lbl_version, False, False, 5)
+        
+        main_vbox.pack_start(bottom_hbox, False, False, 0)
 
         self.populate_tree(); self.window.show_all(); Gtk.main()
         return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
     def populate_tree(self):
         self.store.clear(); av, hi, tr = set(self.available_filters), set(self.hidden_filters), self.config["translate_active"]
-        def _add_node(parent, items, is_hidden=False, level=0):
+        def _add_node(parent, items, is_hidden=False, level=0, path=""):
             for name, content in items:
                 indent = "    " * level
                 if isinstance(content, list):
@@ -286,10 +359,11 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
                     elif is_fav: markup = f"{indent}⭐ {lc}"
                     else: markup = f"{indent}{'▶️' if level == 0 else '⏩'} {lc}"
                     
-                    node_id = name if (is_custom or is_fav) else f"__cat__{name}"
+                    current_path = f"{path}/{name}" if path else name
+                    node_id = name if (is_custom or is_fav) else f"__cat__{name}|||{current_path}"
                     
                     node = self.store.append(parent, [markup, node_id])
-                    _add_node(node, content, is_hidden, level + 1)
+                    _add_node(node, content, is_hidden, level + 1, current_path)
                     if not self.store.iter_has_child(node): self.store.remove(node)
                 else:
                     if name in av:
@@ -302,7 +376,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
                 _add_node(None, [(f"__fav__{fav_name}", fav_content)])
 
         hist_lc = self.current_translation["categories"].get("History", {}).get("local", "History") if tr else "History"
-        hist = self.store.append(None, [f"📝 {hist_lc}", "__cat__History"])
+        hist = self.store.append(None, [f"📝 {hist_lc}", "__cat__History|||History"])
         for op in self.history:
             if op not in hi: self.store.append(hist, [f"    {self.get_op_name_for_dialog(op)}", op])
         if not self.store.iter_has_child(hist): self.store.remove(hist)
@@ -318,7 +392,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
                     g_content.sort(key=lambda x: x[0]); others_content.append((f"__custom__{g_name}", g_content))
                     for op in ops: assigned_other_ops.add(op)
             for op in sorted([op for op in other_ops if op not in assigned_other_ops]): others_content.append((op, op))
-            if others_content: _add_node(None, [("Third-Party Filters", others_content)])
+            if others_content: _add_node(None, [("Third-Party Filters", list(others_content))])
         if self.hidden_filters: _add_node(None, [("Hidden", [(op, op) for op in self.hidden_filters])], is_hidden=True)
 
     def update_node_icon(self, model, treeiter, is_expanded):
@@ -332,6 +406,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
 
     def on_row_expanded(self, tv, it_expanded, path):
         self.update_node_icon(tv.get_model(), it_expanded, True)
+        if getattr(self, '_is_refreshing', False): return
         if self.search_entry.get_text(): return
         model = tv.get_model(); parent = model.iter_parent(it_expanded); it = model.iter_children(parent)
         while it:
@@ -405,14 +480,24 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
     def filter_tree_visible(self, m, i, d):
         q = self.search_entry.get_text().lower()
         if not q: return True
-        txt, op = m.get_value(i, 0).lower(), (m.get_value(i, 1) or "").lower()
-        if op.startswith("__custom__") or op.startswith("__fav__") or op.startswith("__cat__"): op = ""
-        if any(x in txt for x in ["⭐", "📝", "🌚", "🧩"]) and not op: return False
-        ci = m.iter_children(i)
-        while ci:
-            if q in m.get_value(ci, 0).lower() or q in (m.get_value(ci, 1) or "").lower(): return True
-            ci = m.iter_next(ci)
-        return (q in txt or q in op)
+        
+        txt = m.get_value(i, 0).lower()
+        op = (m.get_value(i, 1) or "").lower()
+        
+        if (q in txt) or (q in op and not op.startswith("__")):
+            return True
+            
+        def _check_children(it):
+            ci = m.iter_children(it)
+            while ci:
+                c_txt = m.get_value(ci, 0).lower()
+                c_op = (m.get_value(ci, 1) or "").lower()
+                if (q in c_txt) or (q in c_op and not c_op.startswith("__")): return True
+                if _check_children(ci): return True
+                ci = m.iter_next(ci)
+            return False
+            
+        return _check_children(i)
 
     def on_tree_button_press(self, tv, ev):
         if ev.button == 3:
@@ -436,7 +521,7 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
                 
             if clicked_op.startswith("__cat__"):
                 if self.config["translate_active"]:
-                    cat_name = clicked_op.replace("__cat__", "")
+                    cat_name = clicked_op.replace("__cat__", "").split("|||")[0]
                     trn = Gtk.MenuItem(label="📝 Translate / Rename Group")
                     trn.connect("activate", self.on_translate_category, cat_name)
                     m.append(trn)
@@ -616,9 +701,25 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
 
     def refresh_tree(self):
         exp = []
-        if self.treeview.get_model(): self.treeview.get_model().foreach(lambda m, p, i, d: exp.append(m.get_value(i, 1)) if self.treeview.row_expanded(p) else None, None)
-        self.populate_tree(); self.filter_model.refilter()
-        if self.treeview.get_model(): self.treeview.get_model().foreach(lambda m, p, i, d: self.treeview.expand_row(p, False) if m.get_value(i, 1) in exp else None, None)
+        if self.treeview.get_model(): 
+            self.treeview.get_model().foreach(lambda m, p, i, d: exp.append(m.get_value(i, 1)) if self.treeview.row_expanded(p) else None, None)
+        
+        self.populate_tree()
+        self.filter_model.refilter()
+        
+        self._is_refreshing = True
+        if self.treeview.get_model():
+            def _expand(m, p, i, d):
+                if m.get_value(i, 1) in exp:
+                    self.treeview.expand_to_path(p)
+                    self.treeview.expand_row(p, False)
+            self.treeview.get_model().foreach(_expand, None)
+            
+        GLib.idle_add(self._clear_refreshing)
+
+    def _clear_refreshing(self):
+        self._is_refreshing = False
+        return False
 
     def on_reset_filters_clicked(self, w):
         self.window.set_keep_above(False)
@@ -654,7 +755,6 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
             
             loading_win.show_all()
             
-            # メッセージ画面が確実に表示されてから重い処理を始めるためのタイマー
             GLib.timeout_add(100, self._process_reset_filters, loading_win)
         else:
             self.window.set_keep_above(True)
@@ -667,10 +767,10 @@ class PseudoAdjustmentLayer(Gimp.PlugIn):
         raw = self.fetch_and_save_filters(); v = []
         img = Gimp.Image.new(10, 10, 0)
         
-        safe_list = ["gegl:drop-shadow", "gegl:layer-style", "gegl:layer-styles"]
+        safe_list = ["gegl:dropshadow", "gegl:styles"]
         
         for op in raw:
-            if op.startswith("gimp:") or op in safe_list: 
+            if op in safe_list: 
                 v.append(op)
                 continue
             try:
